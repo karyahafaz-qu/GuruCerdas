@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduHafaz - AI Guru Pintar</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Babel untuk kompilasi JSX di Browser -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Import Maps untuk memuat modul React dan Icons via CDN -->
+  <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "lucide-react": "https://esm.sh/lucide-react@0.292.0?deps=react@18.2.0"
+      }
+    }
+  </script>
+
+  <style>
+    /* CSS Tambahan untuk menyembunyikan scrollbar tapi tetap bisa scroll */
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans">
+  
+  <!-- Wadah utama Aplikasi React -->
+  <div id="root"></div>
+
+  <!-- Skrip Aplikasi -->
+  <script type="text/babel" data-type="module">
+    import React, { useState } from 'react';
+    import { createRoot } from 'react-dom/client';
+    import { 
+      User, School, Upload, BookOpen, BrainCircuit, 
+      Settings2, FileText, ClipboardList, CheckCircle2, 
+      Copy, Loader2, ChevronRight, Save, Plus, Minus,
+      Download, FileDown, Image as ImageIcon, Trash2,
+      Table, Layers, ChevronDown, CalendarDays, CalendarRange
+    } from 'lucide-react';
+
+    const apiKey = ""; // API key akan disuntikkan secara otomatis / isi manual jika di github
+
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    // --- DATABASE MATERI POKOK LENGKAP (SD, SMP, SMA) ---
+    const materiDatabase = {
+      "Kurikulum Merdeka": {
+        "Matematika": {
+          "Kelas 1": ["Bilangan sampai 20", "Penjumlahan dan Pengurangan", "Bangun Datar dan Bangun Ruang", "Pengukuran Waktu dan Panjang"],
+          "Kelas 2": ["Bilangan sampai 100", "Perkalian dan Pembagian Dasar", "Pecahan Setengah dan Seperempat"],
+          "Kelas 3": ["Bilangan sampai 1000", "Pecahan Sederhana", "Keliling dan Luas Bangun Datar"],
+          "Kelas 4": ["Pecahan Senilai", "Bilangan Desimal", "Sudut", "Bangun Datar (Segi Banyak)"],
+          "Kelas 5": ["KPK dan FPB", "Pecahan (Operasi Hitung)", "Volume Bangun Ruang"],
+          "Kelas 6": ["Bilangan Bulat Negatif", "Lingkaran", "Bangun Ruang Campuran", "Statistika (Mean, Median, Modus)"],
+          "Kelas 7": ["Bilangan Bulat dan Rasional", "Aljabar", "Persamaan Linear Satu Variabel", "Perbandingan", "Bangun Datar", "Data dan Diagram"],
+          "Kelas 8": ["Menyederhanakan Bentuk Aljabar", "Sistem Persamaan Linear Dua Variabel (SPLDV)", "Fungsi Linear (Persamaan Garis Lurus)", "Peluang", "Teorema Pythagoras", "Lingkaran", "Bangun Ruang"],
+          "Kelas 9": ["Sistem Persamaan Linear Dua Variabel (SPLDV)", "Bangun Ruang Sisi Datar (BRSD)", "Lingkaran dan Garis Singgung", "Bangun Ruang Sisi Lengkung (BRSL)", "Transformasi Geometri", "Kekongruenan", "Peluang dan Pemilihan Sampel"],
+          "Kelas 10": ["Eksponen dan Logaritma", "Barisan dan Deret", "Vektor", "Trigonometri", "Sistem Persamaan Linear"],
+          "Kelas 11": ["Matriks", "Fungsi Komposisi dan Invers", "Lingkaran", "Statistika"],
+          "Kelas 12": ["Limit Fungsi", "Turunan Fungsi", "Integral", "Kombinatorik dan Peluang Kejadian Majemuk"]
+        },
+        "Ilmu Pengetahuan Alam (IPA)": {
+          "Kelas 7": ["Hakikat Ilmu Sains dan Metode Ilmiah", "Zat dan Perubahannya", "Suhu, Kalor, dan Pemuaian", "Gerak dan Gaya", "Klasifikasi Makhluk Hidup", "Ekologi dan Keanekaragaman Hayati", "Bumi dan Tata Surya"],
+          "Kelas 8": ["Pengenalan Sel", "Struktur dan Fungsi Tubuh Makhluk Hidup", "Usaha, Energi, dan Pesawat Sederhana", "Getaran, Gelombang, dan Cahaya", "Unsur, Senyawa, dan Campuran", "Struktur Bumi dan Perkembangannya"],
+          "Kelas 9": ["Sistem Reproduksi pada Manusia", "Pewarisan Sifat", "Bioteknologi", "Listrik Statis dan Dinamis", "Kemagnetan", "Teknologi Ramah Lingkungan"]
+        },
+        "Ilmu Pengetahuan Alam dan Sosial (IPAS)": {
+          "Kelas 4": ["Tumbuhan, Sumber Kehidupan di Bumi", "Wujud Zat dan Perubahannya", "Gaya di Sekitar Kita", "Mengubah Bentuk Energi", "Cerita Tentang Daerahku"],
+          "Kelas 5": ["Melihat karena Cahaya", "Harmoni dalam Ekosistem", "Magnet, Listrik, dan Teknologi", "Bumi Berubah", "Warisan Budaya"],
+          "Kelas 6": ["Bagaimana Tubuh Kita Bergerak", "Cerita Tentang Indonesia", "Benua di Dunia", "Sistem Tata Surya"]
+        },
+        "Biologi": {
+          "Kelas 10": ["Keanekaragaman Hayati", "Virus", "Bioteknologi Dasar", "Ekosistem dan Perubahan Lingkungan"],
+          "Kelas 11": ["Sel", "Jaringan Tumbuhan dan Hewan", "Sistem Gerak", "Sistem Sirkulasi", "Sistem Pencernaan"],
+          "Kelas 12": ["Pertumbuhan dan Perkembangan", "Metabolisme", "Materi Genetik", "Pembelahan Sel", "Evolusi"]
+        },
+        "Fisika": {
+          "Kelas 10": ["Pengukuran dalam Kerja Ilmiah", "Energi Terbarukan", "Pemanasan Global"],
+          "Kelas 11": ["Kinematika", "Dinamika Gerak", "Fluida", "Termodinamika", "Gelombang"],
+          "Kelas 12": ["Listrik Statis dan Dinamis", "Kemagnetan", "Fisika Modern", "Fisika Inti"]
+        },
+        "Kimia": {
+          "Kelas 10": ["Struktur Atom", "Sistem Periodik Unsur", "Ikatan Kimia", "Hukum Dasar Kimia"],
+          "Kelas 11": ["Hidrokarbon", "Termokimia", "Laju Reaksi", "Kesetimbangan Kimia", "Asam Basa"],
+          "Kelas 12": ["Sifat Koligatif Larutan", "Redoks dan Elektrokimia", "Kimia Unsur", "Senyawa Karbon"]
+        },
+        "Pendidikan Agama Islam (PAI)": {
+          "Kelas 1": ["Kasih Sayang Allah SWT", "Rukun Iman", "Rukun Islam", "Mengenal Huruf Hijaiyah"],
+          "Kelas 6": ["Q.S. Al-Kafirun dan Al-Ma'idah", "Asmaul Husna", "Hari Kiamat", "Kisah Sahabat Nabi"],
+          "Kelas 7": ["Al-Qur'an dan Sunah Pedoman Hidup", "Meneladani Asmaul Husna", "Salat dan Zikir", "Sujud Sahwi, Tilawah, Syukur", "Sejarah Bani Umayyah"],
+          "Kelas 8": ["Inspirasi Al-Qur'an: Melestarikan Alam", "Meyakini Kitab-Kitab Allah", "Puasa Sunah dan Wajib", "Makanan dan Minuman Halal Haram", "Sejarah Bani Abbasiyah"],
+          "Kelas 9": ["Semangat Mencari Ilmu", "Meyakini Hari Akhir", "Zakat, Infaq, Sedekah, Wakaf", "Penyembelihan Hewan, Qurban dan Aqiqah", "Sejarah Islam di Nusantara"],
+          "Kelas 10": ["Kajian Q.S. Al-Hujurat", "Menjauhi Pergaulan Bebas dan Zina", "Asmaul Husna (Tingkat Lanjut)", "Malaikat-malaikat Allah", "Dakwah Rasulullah di Makkah"],
+          "Kelas 11": ["Syaja'ah (Berani Membela Kebenaran)", "Pengurusan Jenazah", "Khutbah, Tabligh, dan Dakwah", "Perkembangan Islam di Masa Modern"],
+          "Kelas 12": ["Berpikir Kritis dan Demokratis (Q.S. Ali Imran)", "Qadha dan Qadar", "Pernikahan dalam Islam", "Sejarah Perkembangan Islam di Dunia"]
+        },
+        "Bahasa Arab": {
+          "Kelas 7": ["التعارف (Perkenalan)", "المرافق المدرسية (Fasilitas Sekolah)", "الأدوات المدرسية (Peralatan Sekolah)", "العنوان (Alamat)", "البيت (Rumah)"],
+          "Kelas 8": ["الساعة (Jam)", "يومياتنا (Keseharian Kita)", "الهواية (Hobi)", "الرياضة (Olahraga)", "المهنة (Profesi)"],
+          "Kelas 9": ["رأس السنة الهجرية (Tahun Baru Hijriah)", "الحفل بمولد الرسول (Perayaan Maulid Nabi)", "نزول القرآن (Nuzulul Quran)", "العيدان (Dua Hari Raya)"],
+          "Kelas 10": ["التحيات والتعارف (Salam & Perkenalan)", "الأسرة والبيت (Keluarga & Rumah)", "المدرسة والبيئة (Sekolah & Lingkungan)"],
+          "Kelas 11": ["التسوق (Berbelanja)", "الصحة (Kesehatan)", "السفر (Perjalanan)"],
+          "Kelas 12": ["الرياضة (Olahraga Lanjut)", "الشباب (Pemuda)", "العالم العربي (Dunia Arab)"]
+        },
+        "Bahasa Indonesia": {
+          "Kelas 7": ["Teks Deskripsi", "Teks Cerita Fantasi", "Teks Prosedur", "Teks Laporan Hasil Observasi", "Puisi Rakyat", "Fabel / Legenda"],
+          "Kelas 8": ["Teks Berita", "Iklan, Slogan, dan Poster", "Teks Eksposisi", "Teks Eksplanasi", "Teks Persuasi", "Teks Drama"],
+          "Kelas 9": ["Teks Laporan Percobaan", "Pidato Persuasif", "Teks Cerpen", "Teks Tanggapan", "Teks Diskusi", "Teks Cerita Inspiratif"],
+          "Kelas 10": ["Teks Laporan Hasil Observasi (SMA)", "Teks Eksposisi", "Teks Anekdot", "Hikayat", "Teks Negosiasi", "Teks Biografi"],
+          "Kelas 11": ["Teks Prosedur Kompleks", "Teks Eksplanasi (SMA)", "Ceramah", "Cerpen (Resensi)", "Karya Ilmiah"],
+          "Kelas 12": ["Surat Lamaran Pekerjaan", "Teks Cerita Sejarah", "Teks Editorial", "Novel", "Artikel Fakta dan Opini"]
+        },
+        "Bahasa Inggris": {
+          "Kelas 7": ["Greetings and Introductions", "Descriptive Text (People & Things)", "Daily Routines", "Telling Time and Dates"],
+          "Kelas 8": ["Asking and Giving Attention", "Capabilities and Willingness", "Recount Text (Personal Experience)", "Comparative and Superlative"],
+          "Kelas 9": ["Congratulation and Hope", "Procedure Text (Recipe & Manual)", "Narrative Text (Fairy Tales)", "Passive Voice"],
+          "Kelas 10": ["Self Introduction", "Descriptive Text (Tourism)", "Announcement", "Recount Text (Historical)"],
+          "Kelas 11": ["Asking and Giving Opinion", "Formal Invitation", "Analytical Exposition", "Personal Letter"],
+          "Kelas 12": ["Offering Help", "Application Letter", "News Item", "Conditional Sentences"]
+        },
+        "Pendidikan Pancasila (PKn)": {
+          "Kelas 7": ["Sejarah Perumusan Pancasila", "Norma dan Keadilan", "Perumusan UUD 1945", "Keberagaman Suku, Agama, Ras"],
+          "Kelas 8": ["Kedudukan dan Makna Pancasila", "Tata Urutan Peraturan Perundang-undangan", "Kebangkitan Nasional 1908", "Sumpah Pemuda"],
+          "Kelas 9": ["Dinamika Perwujudan Pancasila", "Pokok Pikiran UUD 1945", "Kedaulatan NKRI", "Harmoni Keberagaman"],
+          "Kelas 10": ["Pancasila dalam Praktik Penyelenggaraan Pemerintahan", "Wilayah Negara", "Wawasan Nusantara"],
+          "Kelas 11": ["Hak Asasi Manusia", "Sistem Demokrasi", "Sistem Hukum dan Peradilan", "Peran Indonesia dalam Perdamaian Dunia"],
+          "Kelas 12": ["Pelanggaran Hak dan Pengingkaran Kewajiban", "Perlindungan dan Penegakan Hukum", "Pengaruh IPTEK", "Dinamika Persatuan Bangsa"]
+        },
+        "Sejarah": {
+          "Kelas 10": ["Konsep Dasar Sejarah", "Manusia Purba", "Kerajaan Hindu-Buddha", "Kerajaan Islam di Nusantara"],
+          "Kelas 11": ["Kolonialisme dan Imperialisme", "Pergerakan Nasional", "Proklamasi Kemerdekaan"],
+          "Kelas 12": ["Perjuangan Mempertahankan Kemerdekaan", "Demokrasi Liberal dan Terpimpin", "Orde Baru dan Reformasi", "Peran Indonesia di Dunia Internasional"]
+        },
+        "Geografi": {
+          "Kelas 10": ["Pengetahuan Dasar Geografi", "Pemetaan, SIG, dan Penginderaan Jauh", "Langkah Penelitian Geografi", "Dinamika Litosfer", "Dinamika Atmosfer"],
+          "Kelas 11": ["Posisi Strategis Indonesia", "Persebaran Flora dan Fauna", "Pengelolaan Sumber Daya Alam", "Dinamika Kependudukan", "Mitigasi Bencana Alam"],
+          "Kelas 12": ["Konsep Wilayah dan Tata Ruang", "Interaksi Keruangan Desa dan Kota", "Pemanfaatan Peta dan SIG", "Kerja Sama Negara Maju dan Berkembang"]
+        },
+        "Ekonomi": {
+          "Kelas 10": ["Konsep Dasar Ilmu Ekonomi", "Masalah Ekonomi", "Pelaku Ekonomi", "Keseimbangan Pasar", "Bank dan Lembaga Keuangan"],
+          "Kelas 11": ["Pendapatan Nasional", "Pertumbuhan dan Pembangunan Ekonomi", "Ketenagakerjaan", "Inflasi dan Kebijakan Moneter", "APBN dan APBD"],
+          "Kelas 12": ["Akuntansi Sebagai Sistem Informasi", "Persamaan Dasar Akuntansi", "Siklus Akuntansi Perusahaan Jasa", "Siklus Akuntansi Perusahaan Dagang"]
+        },
+        "Sosiologi": {
+          "Kelas 10": ["Fungsi Sosiologi", "Interaksi Sosial", "Nilai dan Norma", "Sosialisasi dan Kepribadian", "Penyimpangan Sosial"],
+          "Kelas 11": ["Kelompok Sosial", "Permasalahan Sosial", "Perbedaan, Kesetaraan, dan Harmoni Sosial", "Konflik dan Kekerasan", "Integrasi dan Reintegrasi"],
+          "Kelas 12": ["Perubahan Sosial", "Globalisasi", "Ketimpangan Sosial", "Kearifan Lokal", "Pemberdayaan Komunitas"]
+        },
+        "Informatika / TIK": {
+          "Kelas 7": ["Berpikir Komputasional", "Sistem Komputer", "Jaringan Komputer dan Internet", "Analisis Data"],
+          "Kelas 8": ["Berpikir Komputasional Lanjut", "Perangkat Lunak Aplikasi", "Algoritma dan Pemrograman Dasar", "Dampak Sosial Informatika"],
+          "Kelas 9": ["Sistem Komputer Lanjut", "Pemrograman Visual", "Praktik Lintas Bidang"],
+          "Kelas 10": ["Berpikir Komputasional (SMA)", "Sistem Komputer dan Jaringan", "Analisis Data (SMA)", "Pemrograman Python Dasar"],
+          "Kelas 11": ["Struktur Data", "Algoritma Lanjut", "Jaringan Komputer Topologi", "Kecerdasan Buatan Dasar"],
+          "Kelas 12": ["Manajemen Proyek TI", "Keamanan Siber (Cyber Security)", "Dampak Etika dan Sosial IPTEK"]
+        }
+      },
+      "Kurikulum 2013 (K13)": {
+        "Matematika": {
+          "Kelas 6": ["Bilangan Bulat", "Operasi Hitung Campuran", "Lingkaran", "Bangun Ruang", "Statistika"],
+          "Kelas 7": ["Bilangan", "Himpunan", "Bentuk Aljabar", "PLSV dan PtLSV", "Perbandingan", "Aritmetika Sosial", "Garis dan Sudut", "Segitiga dan Segiempat", "Penyajian Data"],
+          "Kelas 8": ["Pola Bilangan", "Koordinat Kartesius", "Relasi dan Fungsi", "Persamaan Garis Lurus", "SPLDV", "Teorema Pythagoras", "Lingkaran", "Bangun Ruang Sisi Datar", "Statistika", "Peluang"],
+          "Kelas 9": ["Perpangkatan dan Bentuk Akar", "Persamaan Kuadrat", "Fungsi Kuadrat", "Transformasi Geometri", "Kesebangunan", "Bangun Ruang Sisi Lengkung"],
+          "Kelas 10": ["Persamaan dan Pertidaksamaan Nilai Mutlak", "Sistem Persamaan Linear Tiga Variabel (SPLTV)", "Fungsi", "Trigonometri"],
+          "Kelas 11": ["Induksi Matematika", "Program Linear", "Matriks", "Transformasi (K13)", "Barisan dan Deret", "Limit Fungsi Aljabar"],
+          "Kelas 12": ["Dimensi Tiga", "Statistika (SMA)", "Peluang Kejadian Majemuk"]
+        },
+        "Ilmu Pengetahuan Alam (IPA)": {
+          "Kelas 7": ["Objek IPA dan Pengamatannya", "Klasifikasi Makhluk Hidup", "Zat dan Karakteristiknya", "Suhu dan Kalor", "Energi", "Sistem Organisasi Kehidupan", "Tata Surya"],
+          "Kelas 8": ["Gerak Benda", "Pesawat Sederhana", "Struktur Tumbuhan", "Sistem Pencernaan", "Zat Aditif", "Sistem Peredaran Darah", "Tekanan Zat", "Sistem Pernapasan", "Getaran dan Gelombang", "Optik"],
+          "Kelas 9": ["Sistem Reproduksi Manusia", "Pewarisan Sifat", "Listrik Statis", "Listrik Dinamis", "Kemagnetan", "Bioteknologi"]
+        },
+        "Bahasa Arab": {
+          "Kelas 7": ["التعارف (Perkenalan)", "المرافق المدرسية (Fasilitas Sekolah)", "الأدوات المدرسية (Alat Sekolah)"],
+          "Kelas 8": ["الساعة (Jam)", "يومياتنا (Keseharian Kita)", "الهواية (Hobi)"],
+          "Kelas 9": ["رأس السنة الهجرية (Tahun Baru Hijriah)", "الحفل بمولد الرسول (Maulid Nabi)", "نزول القرآن (Nuzulul Quran)"]
+        }
+      }
+    };
+
+    function App() {
+      const [activeTab, setActiveTab] = useState('identitas');
+      
+      // API KEY STATE UNTUK GITHUB PAGES
+      const [userApiKey, setUserApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
+
+      // GLOBAL STATE: Identitas
+      const [identitas, setIdentitas] = useState({
+        namaGuru: 'M Roy Reynaldo, S.Pd, Gr',
+        namaSekolah: 'SMPIT Al Fidaa',
+        kurikulum: 'Kurikulum Merdeka',
+        jenjang: 'SMP/MTs',
+        fase: 'Fase D',
+        kelas: 'Kelas 9',
+        mapel: 'Matematika',
+        semester: '2 (Genap)',
+        tahunAjaran: '2026/2027',
+        jumlahPertemuan: '2 Pertemuan (4 JP)',
+        materi: 'Transformasi Geometri',
+        jenisTopik: 'Spesifik',
+        topik: 'Translasi, Refleksi, Rotasi, Dilatasi',
+        judulPaket: 'Ulangan Harian'
+      });
+
+      // LOGIKA AGREGASI MATERI CERDAS
+      const kurikulumKey = identitas.kurikulum.includes('2013') ? 'Kurikulum 2013 (K13)' : 'Kurikulum Merdeka';
+      const subjectData = materiDatabase[kurikulumKey]?.[identitas.mapel] || materiDatabase['Kurikulum Merdeka']?.[identitas.mapel] || {};
+      
+      let materiSuggestions = [];
+      if (identitas.kelas.includes('PSAJ SD')) {
+        materiSuggestions = ["Semua Materi Inti SD (Kelas 4-6)", ...(subjectData['Kelas 4']||[]), ...(subjectData['Kelas 5']||[]), ...(subjectData['Kelas 6']||[])];
+      } else if (identitas.kelas.includes('PSAJ SMP')) {
+        materiSuggestions = ["Semua Materi Inti SMP (Kelas 7-9)", ...(subjectData['Kelas 7']||[]), ...(subjectData['Kelas 8']||[]), ...(subjectData['Kelas 9']||[])];
+      } else if (identitas.kelas.includes('PSAJ SMA')) {
+        materiSuggestions = ["Semua Materi Inti SMA (Kelas 10-12)", ...(subjectData['Kelas 10']||[]), ...(subjectData['Kelas 11']||[]), ...(subjectData['Kelas 12']||[])];
+      } else if (identitas.kelas.includes('SNBT')) {
+        materiSuggestions = ["Kumpulan Soal SNBT/UTBK Campuran", "Fokus Penalaran Kritis & Logika", "Fokus Literasi Membaca", "Fokus Hitungan Kuantitatif"];
+      } else {
+        materiSuggestions = subjectData[identitas.kelas] || [];
+      }
+      
+      materiSuggestions = [...new Set(materiSuggestions)];
+
+      const [showMateriDropdown, setShowMateriDropdown] = useState(false);
+
+      // UPLOAD STATES FOR TOPIK
+      const [topikMode, setTopikMode] = useState('ketik'); 
+      const [topikImage, setTopikImage] = useState(null);
+      const [topikFile, setTopikFile] = useState(null);
+
+      // GLOBAL STATE: Konfigurasi Soal & Karakter
+      const [config, setConfig] = useState({
+        komposisiSoal: [
+          { id: 1, tipe: 'Pilihan Ganda (Biasa)', taksonomi: ['C1', 'C2', 'C3', 'C4'], jumlah: 10 }
+        ],
+        karakterUmum: 'Bernalar Kritis & Kreatif',
+        nilaiIslami: 'Tidak Ada',
+        opsiStimulus: 'Sesuai Kebutuhan (HOTS & Karakter)',
+        opsiGambar: 'Gunakan Jika Relevan'
+      });
+
+      // AI STATES
+      const [loading, setLoading] = useState(false);
+      const [generatedSoal, setGeneratedSoal] = useState([]);
+      const [generatedModul, setGeneratedModul] = useState(null);
+      const [generatedKisiKisi, setGeneratedKisiKisi] = useState(null);
+      const [generatedRPP, setGeneratedRPP] = useState(null);
+      const [generatedLKPD, setGeneratedLKPD] = useState(null);
+      const [generatedProta, setGeneratedProta] = useState(null);
+      const [generatedProsem, setGeneratedProsem] = useState(null);
+      const [showAnswers, setShowAnswers] = useState(false);
+
+      // --- AI FETCHER ---
+      const generateWithAI = async (prompt, schema, maxRetries = 5, imageData = null) => {
+        const currentKey = userApiKey || apiKey;
+        if (!currentKey || currentKey.trim() === '') {
+          throw new Error("API Key Gemini belum diisi! Silakan masukkan kunci API di tab Identitas.");
+        }
+
+        const parts = [{ text: prompt }];
+        if (imageData) parts.push(imageData);
+
+        const payload = {
+          contents: [{ parts: parts }],
+          systemInstruction: { 
+            parts: [{ text: "Anda adalah asisten pendidik ahli berbahasa Indonesia yang bertugas membuat perangkat pembelajaran yang akurat, terstruktur, tidak ambigu, dan sangat terampil menyisipkan nilai-nilai karakter serta nilai Islami secara natural." }] 
+          },
+          generationConfig: { responseMimeType: "application/json", responseSchema: schema }
+        };
+
+        const delays = [1000, 2000, 4000, 8000, 16000];
+        for (let i = 0; i < maxRetries; i++) {
+          try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${currentKey}`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+            });
+            if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+            const data = await response.json();
+            return JSON.parse(data.candidates[0].content.parts[0].text);
+          } catch (err) {
+            if (i === maxRetries - 1) throw err;
+            await delay(delays[i]);
+          }
+        }
+      };
+
+      const processImage = async () => {
+        let imageData = null;
+        if (topikMode === 'gambar' && topikImage) {
+          const getBase64 = (file) => new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.readAsDataURL(file);
+              reader.onload = () => resolve(reader.result);
+              reader.onerror = error => reject(error);
+          });
+          try {
+              const base64Str = await getBase64(topikImage);
+              imageData = { inlineData: { data: base64Str.split(',')[1], mimeType: topikImage.type } };
+          } catch(e) { console.error("Gagal memproses gambar"); }
+        }
+        return imageData;
+      };
+
+      // --- GENERATOR LOGICS ---
+      const handleGenerateProta = async () => {
+        setLoading(true); setGeneratedProta(null);
+        const kurmerRule = identitas.kurikulum.includes('Merdeka') ? 'WAJIB menggunakan istilah Elemen, Capaian Pembelajaran (CP), dan Tujuan Pembelajaran (TP). DILARANG KERAS menggunakan istilah Standar Kompetensi, KI, atau KD.' : 'Gunakan istilah Kompetensi Inti (KI) dan Kompetensi Dasar (KD).';
+
+        const prompt = `Buatkan Program Tahunan (Prota) lengkap secara profesional untuk:
+        - Mata Pelajaran: ${identitas.mapel}
+        - Kelas: ${identitas.kelas}
+        - Kurikulum: ${identitas.kurikulum}
+        - Tahun Ajaran: ${identitas.tahunAjaran}
+        
+        Rincikan secara lengkap pemetaan materi pokok / elemen pembelajaran dari Semester 1 (Ganjil) dan Semester 2 (Genap) beserta estimasi Alokasi Waktu (dalam Jam Pelajaran/JP) selama satu tahun penuh. 
+        PENTING: ${kurmerRule}`;
+
+        const schema = {
+          type: "ARRAY", items: {
+            type: "OBJECT", properties: {
+              semester: { type: "STRING" },
+              kompetensi: { type: "STRING", description: "Elemen/CP/TP untuk Kurikulum Merdeka, atau KD untuk K13" },
+              materi_pokok: { type: "STRING" },
+              alokasi_waktu: { type: "STRING", description: "Misal: 12 JP" }
+            }, required: ["semester", "kompetensi", "materi_pokok", "alokasi_waktu"]
+          }
+        };
+
+        try { setGeneratedProta(await generateWithAI(prompt, schema, 5)); } 
+        catch (err) { alert('Gagal membuat Prota. ' + err.message); } 
+        finally { setLoading(false); }
+      };
+
+      const handleGenerateProsem = async () => {
+        setLoading(true); setGeneratedProsem(null);
+        const kurmerRule = identitas.kurikulum.includes('Merdeka') ? 'WAJIB menggunakan istilah Elemen, Tujuan Pembelajaran (TP), Asesmen Sumatif Tengah Semester (STS), dan Asesmen Sumatif Akhir Semester (SAS). DILARANG menggunakan istilah KD, PTS, atau PAS.' : 'Gunakan istilah Kompetensi Dasar (KD), PTS, dan PAS.';
+
+        const prompt = `Buatkan Program Semester (Prosem) lengkap secara profesional untuk:
+        - Mata Pelajaran: ${identitas.mapel}
+        - Kelas: ${identitas.kelas}
+        - Semester: ${identitas.semester}
+        - Kurikulum: ${identitas.kurikulum}
+        - Tahun Ajaran: ${identitas.tahunAjaran}
+        
+        Bagikan materi pokok ke dalam tabel per bulan dan minggu (Minggu Ke-1 s/d Minggu Ke-4/5). Sertakan juga alokasi waktu dan jadwal kegiatan evaluasi/libur.
+        PENTING: ${kurmerRule}`;
+
+        const schema = {
+          type: "ARRAY", items: {
+            type: "OBJECT", properties: {
+              bulan: { type: "STRING", description: "Misal: Juli, Agustus" },
+              minggu_ke: { type: "STRING", description: "Misal: Minggu 1, Minggu 2" },
+              materi_pokok: { type: "STRING", description: "Materi atau Kegiatan Evaluasi/Libur" },
+              alokasi_waktu: { type: "STRING", description: "Misal: 4 JP" },
+              keterangan: { type: "STRING", description: "Keterangan tambahan jika ada" }
+            }, required: ["bulan", "minggu_ke", "materi_pokok", "alokasi_waktu", "keterangan"]
+          }
+        };
+
+        try { setGeneratedProsem(await generateWithAI(prompt, schema, 5)); } 
+        catch (err) { alert('Gagal membuat Prosem. ' + err.message); } 
+        finally { setLoading(false); }
+      };
+
+      const handleGenerateKisiKisi = async () => {
+        setLoading(true); setGeneratedKisiKisi(null);
+        const komposisiText = config.komposisiSoal.filter(k => k.jumlah > 0).map(k => `- ${k.jumlah} soal ${k.tipe} [Level Kognitif: ${Array.isArray(k.taksonomi) ? k.taksonomi.join(', ') : k.taksonomi}]`).join('\n');
+        const totalSoal = config.komposisiSoal.reduce((acc, curr) => acc + curr.jumlah, 0);
+        const kurmerRule = identitas.kurikulum.includes('Merdeka') ? 'WAJIB menggunakan istilah Tujuan Pembelajaran (TP). DILARANG KERAS menggunakan istilah KI atau KD.' : 'Gunakan istilah Kompetensi Dasar (KD).';
+
+        const prompt = `Buatkan Kisi-Kisi Penulisan Soal secara lengkap untuk ${totalSoal} butir soal, berdasarkan:
+        - Mapel: ${identitas.mapel} Kelas ${identitas.kelas} Semester ${identitas.semester} (${identitas.kurikulum})
+        - Materi Pokok: "${identitas.materi}"
+        - Topik Acuan: "${identitas.topik}"
+        - Komposisi Bentuk Soal & Target Taksonomi Bloom: \n${komposisiText}
+        
+        PENTING: ${kurmerRule}`;
+
+        const imageData = await processImage();
+        const schema = {
+          type: "ARRAY", items: {
+            type: "OBJECT", properties: {
+              no: { type: "STRING" },
+              kompetensi: { type: "STRING" },
+              materi: { type: "STRING" },
+              indikator_soal: { type: "STRING" },
+              level_kognitif: { type: "STRING" },
+              bentuk_soal: { type: "STRING" }
+            }, required: ["no", "kompetensi", "materi", "indikator_soal", "level_kognitif", "bentuk_soal"]
+          }
+        };
+
+        try { setGeneratedKisiKisi(await generateWithAI(prompt, schema, 5, imageData)); } 
+        catch (err) { alert('Gagal membuat kisi-kisi. ' + err.message); } 
+        finally { setLoading(false); }
+      };
+
+      const handleGenerateSoal = async () => {
+        setLoading(true); setGeneratedSoal([]); setShowAnswers(false);
+        
+        let karakterPrompt = '';
+        if (config.karakterUmum !== 'Tidak Ada') karakterPrompt += `\n- WAJIB integrasikan Karakter Umum: "${config.karakterUmum}" ke dalam narasi/cerita soal.`;
+        if (config.nilaiIslami !== 'Tidak Ada') karakterPrompt += `\n- WAJIB jadikan Nilai Islami: "${config.nilaiIslami}" sebagai TEMA CERITA pada stimulus soal.`;
+
+        const komposisiText = config.komposisiSoal.filter(k => k.jumlah > 0).map(k => `- ${k.jumlah} soal ${k.tipe} [Level Kognitif: ${Array.isArray(k.taksonomi) ? k.taksonomi.join(', ') : k.taksonomi}]`).join('\n');
+        const totalSoal = config.komposisiSoal.reduce((acc, curr) => acc + curr.jumlah, 0);
+
+        let stimulusRule = '';
+        if (config.opsiStimulus === 'Wajib Ada (Semua Soal)') {
+            stimulusRule = '3. STIMULUS CERITA: Anda WAJIB mengisi "teks_stimulus" dengan wacana/cerita fiktif/studi kasus/data pada SETIAP SOAL tanpa terkecuali.';
+        } else if (config.opsiStimulus === 'Tidak Ada (To the point)') {
+            stimulusRule = '3. STIMULUS CERITA: JANGAN memberikan stimulus apapun. Kosongkan "teks_stimulus" (isi dengan string kosong "") untuk SEMUA soal. Langsung tanyakan intinya.';
+        } else {
+            stimulusRule = '3. STIMULUS CERITA & KARAKTER: Jika soal bertipe HOTS (C4-C6) atau memiliki sisipan nilai Karakter/Islami, WAJIB mengisi "teks_stimulus" dengan cerita fiktif/studi kasus pendek yang relevan. Jika soal dasar, boleh dikosongkan.';
+        }
+
+        let gambarRule = '';
+        if (config.opsiGambar === 'Tanpa Gambar') {
+            gambarRule = '4. ILUSTRASI VISUAL: JANGAN sertakan ilustrasi gambar apapun. Atur "butuh_gambar" ke false dan "keyword_pencarian_gambar" ke "".';
+        } else {
+            gambarRule = '4. ILUSTRASI VISUAL: Jika stimulus/pertanyaan butuh gambar visual (sains, geometri, peta, dsb), atur "butuh_gambar" ke true dan tulis deskripsi gambar BAHASA INGGRIS yang sangat detail di "keyword_pencarian_gambar".';
+        }
+
+        const prompt = `Buatkan sebuah paket soal ujian (TOTAL ${totalSoal} SOAL) dengan komposisi yang TEPAT sebagai berikut:
+        ${komposisiText}
+        
+        Konteks Soal:
+        - Jenjang: ${identitas.jenjang} ${identitas.kelas} Semester ${identitas.semester}
+        - Mapel: ${identitas.mapel}
+        - Materi Pokok: "${identitas.materi}"
+        - Acuan: "${identitas.topik}"${karakterPrompt}
+        
+        PENTING: 
+        1. Pastikan setiap soal memiliki property "tipe_soal".
+        2. KHUSUS UNTUK SOAL TIPE "Isian": Format soal HARUS berupa kalimat pernyataan rumpang dengan titik-titik (contoh: "Ibukota Indonesia adalah ....") atau pertanyaan spesifik 1-3 kata.
+        ${stimulusRule}
+        ${gambarRule}
+        ${identitas.mapel === 'Bahasa Arab' ? '5. KHUSUS MATA PELAJARAN BAHASA ARAB: Seluruh teks soal, teks stimulus, dan opsi jawaban (pilihan) WAJIB ditulis dalam Bahasa Arab lengkap dengan harakat (tashkeel). Penjelasan/kunci jawaban boleh menggunakan bahasa Indonesia.' : ''}`;
+
+        const imageData = await processImage();
+        const schema = {
+          type: "ARRAY", items: {
+            type: "OBJECT", properties: {
+              tipe_soal: { type: "STRING" },
+              teks_stimulus: { type: "STRING" },
+              pertanyaan: { type: "STRING" },
+              butuh_gambar: { type: "BOOLEAN" },
+              keyword_pencarian_gambar: { type: "STRING" },
+              pilihan: { type: "ARRAY", items: { type: "STRING" } },
+              jawaban: { type: "STRING" },
+              penjelasan: { type: "STRING" },
+              pesan_karakter: { type: "STRING" }
+            }, required: ["tipe_soal", "teks_stimulus", "pertanyaan", "jawaban", "penjelasan", "pesan_karakter", "butuh_gambar"]
+          }
+        };
+
+        try { setGeneratedSoal(await generateWithAI(prompt, schema, 5, imageData)); } 
+        catch (err) { alert('Gagal membuat soal. ' + err.message); } 
+        finally { setLoading(false); }
+      };
+
+      const handleGenerateRPP = async () => {
+        setLoading(true); setGeneratedRPP(null);
+        let karakterPrompt = '';
+        if (config.karakterUmum !== 'Tidak Ada') karakterPrompt += `\n- Fokus Karakter/Profil Pelajar Pancasila: "${config.karakterUmum}".`;
+        if (config.nilaiIslami !== 'Tidak Ada') karakterPrompt += `\n- Fokus Nilai Islami: "${config.nilaiIslami}".`;
+        const kurmerRule = identitas.kurikulum.includes('Merdeka') ? 'Struktur WAJIB menggunakan istilah Kurikulum Merdeka: Capaian Pembelajaran (CP), Tujuan Pembelajaran (TP), Pemahaman Bermakna, Pertanyaan Pemantik, dan Profil Pelajar Pancasila.' : 'Gunakan struktur K13 (KI/KD).';
+
+        const prompt = `Buatkan Rencana Pelaksanaan Pembelajaran (RPP/Modul Ajar) Pendekatan Mendalam (Deep Learning) untuk:
+        - Kurikulum: ${identitas.kurikulum} | Jenjang: ${identitas.jenjang} ${identitas.kelas} Semester ${identitas.semester}
+        - Mapel: ${identitas.mapel} | Materi Pokok: "${identitas.materi}" | Topik: "${identitas.topik}"
+        - Alokasi Waktu: ${identitas.jumlahPertemuan}${karakterPrompt}
+        
+        PENTING: ${kurmerRule}
+        - WAJIB menerapkan sintaks pendekatan TERPADU JSIT pada rincian kegiatan:
+          * Pendahuluan: masukkan aktivitas "Telaah" (menelaah ayat/dalil/fenomena).
+          * Kegiatan Inti: uraikan langkah "Eksplorasi", "Rumuskan", "Presentasikan", "Aplikasikan".
+          * Penutup: uraikan internalisasi "Duniawi" dan "Ukhrowi".
+        - Gunakan HURUF KAPITAL untuk kata kunci TERPADU di awal poin (contoh: "TELAAH: Guru mengajak...", "EKSPLORASI: Siswa mencari...").
+        Jika alokasi waktu lebih dari 1 pertemuan, Anda WAJIB membagi Kegiatan Pembelajaran (Pendahuluan, Inti, Penutup) ke dalam beberapa pertemuan secara terstruktur (misal: "Pertemuan 1: Telaah & Eksplorasi").
+        ${identitas.mapel === 'Bahasa Arab' ? '\nKHUSUS BAHASA ARAB: Sertakan teks materi, mufrodat (kosakata), atau contoh kalimat dalam bahasa Arab berharakat (tashkeel) penuh.' : ''}`;
+
+        const imageData = await processImage();
+        const schema = { 
+          type: "OBJECT", properties: { 
+            judul_rpp: { type: "STRING" }, tujuan_pembelajaran: { type: "ARRAY", items: { type: "STRING" } },
+            pemahaman_bermakna: { type: "STRING" }, pertanyaan_pemantik: { type: "ARRAY", items: { type: "STRING" } },
+            kegiatan_pembelajaran: { type: "OBJECT", properties: { pendahuluan: { type: "ARRAY", items: { type: "STRING" } }, inti_eksplorasi_mendalam: { type: "ARRAY", items: { type: "STRING" } }, penutup_dan_refleksi: { type: "ARRAY", items: { type: "STRING" } } } }, 
+            asesmen: { type: "STRING" } 
+          } 
+        };
+        
+        try { setGeneratedRPP(await generateWithAI(prompt, schema, 5, imageData)); } 
+        catch (err) { alert("Gagal menyusun RPP. " + err.message); } 
+        finally { setLoading(false); }
+      };
+
+      const handleGenerateModul = async () => {
+        setLoading(true); setGeneratedModul(null);
+        let karakterPrompt = '';
+        if (config.karakterUmum !== 'Tidak Ada') karakterPrompt += `\n- Karakter: "${config.karakterUmum}".`;
+        if (config.nilaiIslami !== 'Tidak Ada') karakterPrompt += `\n- Islami: "${config.nilaiIslami}".`;
+
+        const prompt = `Buatkan Modul Ajar Pendekatan Terpadu (Pola JSIT) untuk:
+        - Jenjang: ${identitas.jenjang} ${identitas.kelas} Semester ${identitas.semester}
+        - Mapel: ${identitas.mapel} | Materi Pokok: "${identitas.materi}"
+        - Alokasi Waktu: ${identitas.jumlahPertemuan} | Acuan: "${identitas.topik}".${karakterPrompt}
+        
+        PENTING: Gunakan sintaks pendekatan TERPADU JSIT (Telaah, Eksplorasi, Rumuskan, Presentasikan, Aplikasikan, Duniawi, Ukhrowi) yaitu metode pembelajaran aktif untuk memadukan nilai Islam dengan materi kurikulum nasional. Sesuaikan kedalaman skenario kegiatan TERPADU dengan alokasi waktu/jumlah pertemuan yang diminta. Jika lebih dari 1 pertemuan, jabarkan dengan jelas pertemuannya.
+        ${identitas.mapel === 'Bahasa Arab' ? '\nKHUSUS BAHASA ARAB: Sertakan teks materi, mufrodat (kosakata), أو contoh kalimat pendukung dalam bahasa Arab berharakat (tashkeel) penuh.' : ''}`;
+        const imageData = await processImage();
+        const schema = { type: "OBJECT", properties: { judul: { type: "STRING" }, tujuan: { type: "ARRAY", items: { type: "STRING" } }, kegiatan_terpadu: { type: "OBJECT", properties: { telaah: { type: "STRING" }, eksplorasi: { type: "STRING" }, rumuskan: { type: "STRING" }, presentasikan: { type: "STRING" }, aplikasikan: { type: "STRING" }, duniawi: { type: "STRING" }, ukhrawi: { type: "STRING" } } }, asesmen: { type: "STRING" } } };
+        
+        try { setGeneratedModul(await generateWithAI(prompt, schema, 5, imageData)); } 
+        catch (err) { alert("Gagal membuat modul. " + err.message); } 
+        finally { setLoading(false); }
+      };
+
+      const handleGenerateLKPD = async () => {
+        setLoading(true); setGeneratedLKPD(null);
+        let karakterPrompt = '';
+        if (config.karakterUmum !== 'Tidak Ada') karakterPrompt += `\n- Karakter: "${config.karakterUmum}".`;
+        if (config.nilaiIslami !== 'Tidak Ada') karakterPrompt += `\n- Islami: "${config.nilaiIslami}".`;
+
+        const prompt = `Buatkan Lembar Kerja Peserta Didik (LKPD) yang menarik dan interaktif untuk:
+        - Kelas: ${identitas.kelas} | Semester: ${identitas.semester} | Mapel: ${identitas.mapel}
+        - Materi Pokok: "${identitas.materi}" | Acuan: "${identitas.topik}"
+        - Alokasi Waktu: ${identitas.jumlahPertemuan}${karakterPrompt}
+        LKPD ini harus memandu siswa melakukan pengamatan, analisis, atau pemecahan masalah (HOTS).
+        ${identitas.mapel === 'Bahasa Arab' ? '\nKHUSUS BAHASA ARAB: Pertanyaan diskusi, kosakata, atau teks bacaan yang disajikan WAJIB menggunakan teks Arab berharakat lengkap.' : ''}`;
+        
+        const imageData = await processImage();
+        const schema = { 
+          type: "OBJECT", properties: { 
+            judul_lkpd: { type: "STRING" }, 
+            tujuan_pembelajaran: { type: "ARRAY", items: { type: "STRING" } },
+            alat_dan_bahan: { type: "ARRAY", items: { type: "STRING" }, description: "Kosongkan jika tidak butuh alat khusus" },
+            langkah_kerja: { type: "ARRAY", items: { type: "STRING" } }, 
+            pertanyaan_diskusi: { type: "ARRAY", items: { type: "STRING" } },
+            kesimpulan: { type: "STRING" }
+          } 
+        };
+        
+        try { setGeneratedLKPD(await generateWithAI(prompt, schema, 5, imageData)); } 
+        catch (err) { alert("Gagal menyusun LKPD. " + err.message); } 
+        finally { setLoading(false); }
+      };
+
+      // --- HANDLERS ---
+      const handleInputChange = (e, setter) => {
+        const { name, value } = e.target;
+        setter(prev => ({ ...prev, [name]: value }));
+      };
+
+      // Universal Word Exporter for DOM elements
+      const exportDocumentFromDOM = (elementId, filename) => {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        
+        const content = `
+          <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+          <head><meta charset='utf-8'><title>Export</title></head>
+          <body style="font-family: Arial, sans-serif; line-height: 1.5; color: #000;">
+          ${el.innerHTML}
+          </body></html>
+        `;
+        const url = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(content);
+        const downloadLink = document.createElement("a");
+        document.body.appendChild(downloadLink);
+        downloadLink.href = url;
+        downloadLink.download = filename + '.doc';
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+      };
+
+      // Specific Word Exporter for Soal
+      const exportNaskahSoalToWord = () => {
+        let content = `
+          <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+          <head><meta charset='utf-8'></head><body>
+          <div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt;">
+            <h2 style="text-align: center; font-size: 14pt;">NASKAH SOAL ${identitas.mapel.toUpperCase()}</h2>
+            <p style="text-align: center; margin-bottom: 20px;">Materi: ${identitas.materi} | Kelas: ${identitas.kelas} | Semester: ${identitas.semester}</p>
+        `;
+
+        generatedSoal.forEach((q, i) => {
+          content += `<div dir="auto" style="margin-bottom: 15px;">`;
+          
+          // Teks Stimulus/Wacana diformat miring dan rata kanan-kiri
+          if (q.teks_stimulus && q.teks_stimulus.trim() !== '') {
+              content += `<p dir="auto" style="margin-top: 0; margin-bottom: 8px; text-align: justify;"><i>${q.teks_stimulus}</i></p>`;
+          }
+          
+          // Gambar dikunci ukurannya dengan atribut width dan height spesifik untuk Word
+          if (q.butuh_gambar && q.keyword_pencarian_gambar) {
+              content += `<p style="text-align: center; margin-bottom: 8px;"><img src="https://image.pollinations.ai/prompt/${encodeURIComponent(q.keyword_pencarian_gambar)}?width=400&height=250&nologo=true" width="400" height="250" alt="Ilustrasi"/></p>`;
+          }
+
+          // Pertanyaan
+          content += `<p dir="auto" style="margin-top: 0; margin-bottom: 5px; text-align: justify;"><b>${i + 1}.</b> ${q.pertanyaan}</p>`;
+
+          // Pilihan Ganda
+          if (q.pilihan && q.pilihan.length > 0) {
+            content += `<ol type="A" dir="auto" style="margin-top: 0; padding-left: 20px;">`;
+            q.pilihan.forEach((opt) => { 
+              content += `<li dir="auto" style="margin-bottom: 3px;">${opt}</li>`; 
+            });
+            content += `</ol>`;
+          }
+          content += `</div>`;
+        });
+
+        if (showAnswers) {
+           content += `<br/><hr/><h3 style="text-align: center; font-size: 14pt;">KUNCI JAWABAN & PEMBAHASAN</h3><br/>`;
+           generatedSoal.forEach((q, i) => {
+              content += `<div style="margin-bottom: 10px;">`;
+              content += `<p dir="auto" style="margin: 0;"><b>${i + 1}. Jawaban: ${q.jawaban}</b></p>`;
+              content += `<p dir="auto" style="margin: 0;">Pembahasan: ${q.penjelasan}</p>`;
+              if (q.pesan_karakter && q.pesan_karakter !== '-') {
+                 content += `<p dir="auto" style="margin: 0; font-style: italic;">Karakter: ${q.pesan_karakter}</p>`;
+              }
+              content += `</div>`;
+           });
+        }
+        content += `</div></body></html>`;
+
+        const url = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(content);
+        const downloadLink = document.createElement("a");
+        document.body.appendChild(downloadLink);
+        downloadLink.href = url;
+        downloadLink.download = `Soal_${identitas.mapel.replace(/\s+/g, '_')}.doc`;
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+      };
+
+      const tabs = [
+        { id: 'identitas', label: 'Identitas', icon: User },
+        { id: 'konfigurasi', label: 'Konfigurasi', icon: Settings2 },
+        { id: 'prota', label: 'Program Tahunan', icon: CalendarDays },
+        { id: 'prosem', label: 'Program Semester', icon: CalendarRange },
+        { id: 'kisi_kisi', label: 'Kisi-kisi Soal', icon: Table },
+        { id: 'naskah_soal', label: 'Naskah Soal', icon: FileText },
+        { id: 'rpp', label: 'RPP Mendalam', icon: Layers },
+        { id: 'modul_ajar', label: 'Modul Ajar', icon: BookOpen },
+        { id: 'lkpd', label: 'LKPD', icon: ClipboardList },
+      ];
+
+      return (
+        <div className="min-h-screen bg-slate-100 font-sans text-slate-800 pb-20">
+          {/* HEADER */}
+          <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="bg-emerald-600 p-2 rounded-lg"><BrainCircuit size={20} className="text-white" /></div>
+                <h1 className="text-xl font-bold text-emerald-900 tracking-tight">Edu<span className="text-emerald-600">Hafaz</span></h1>
+              </div>
+              <div className="text-sm text-slate-500 hidden sm:block">Sahabat Pendidik Islami</div>
+            </div>
+            
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 flex overflow-x-auto hide-scrollbar gap-2 py-3 border-t border-slate-100">
+              {tabs.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${
+                    activeTab === tab.id ? 'bg-emerald-600 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  <tab.icon size={16} /> {tab.label}
+                </button>
+              ))}
+            </div>
+          </header>
+
+          {/* MAIN CONTENT AREA */}
+          <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+            
+            {/* === TAB 1: IDENTITAS === */}
+            {activeTab === 'identitas' && (
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-6 mb-6">
+                  <div>
+                    <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-1 rounded mb-2 inline-block">Langkah 1</span>
+                    <h2 className="text-2xl font-bold text-slate-800">Identitas Soal & Dokumen</h2>
+                    <p className="text-sm text-slate-500">Data identitas disimpan otomatis ke semua dokumen</p>
+                  </div>
+                  <button onClick={() => setActiveTab('konfigurasi')} className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-bold shadow-sm hover:bg-emerald-700">
+                    Konfigurasi <ChevronRight size={16} />
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  {/* KOTAK INPUT API KEY BARU */}
+                  <div className="bg-amber-50 border border-amber-200 p-5 rounded-xl flex flex-col gap-2">
+                    <label className="text-sm font-bold text-amber-900">Gemini API Key (Wajib diisi saat menggunakan GitHub Pages)</label>
+                    <input 
+                      type="password" 
+                      value={userApiKey} 
+                      onChange={(e) => {
+                        setUserApiKey(e.target.value);
+                        localStorage.setItem('gemini_api_key', e.target.value);
+                      }} 
+                      placeholder="Paste (tempel) API Key rahasia Anda di sini..." 
+                      className="w-full p-3 bg-white border border-amber-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 outline-none" 
+                    />
+                    <p className="text-xs text-amber-700">
+                      Anda bisa mendapatkan API Key secara gratis di <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="font-bold text-amber-900 underline">Google AI Studio</a>. Kunci ini hanya disimpan secara aman di dalam perangkat (browser) Anda saja.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-semibold text-slate-700">Nama Guru</label>
+                      <input type="text" name="namaGuru" value={identitas.namaGuru} onChange={(e) => handleInputChange(e, setIdentitas)} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-semibold text-slate-700">Nama Sekolah</label>
+                      <input type="text" name="namaSekolah" value={identitas.namaSekolah} onChange={(e) => handleInputChange(e, setIdentitas)} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-semibold text-slate-700">Logo Sekolah</label>
+                      <div className="flex gap-2 items-center">
+                        <div className="w-12 h-12 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400 shrink-0"><School size={20} /></div>
+                        <button className="flex-1 py-3 px-4 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-50">Unggah Logo</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-semibold text-slate-700">Jenjang</label>
+                      <select name="jenjang" value={identitas.jenjang} onChange={(e) => handleInputChange(e, setIdentitas)} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                        <option>SD/MI</option><option>SMP/MTs</option><option>SMA/MA</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-semibold text-slate-700">Fase</label>
+                      <select name="fase" value={identitas.fase} onChange={(e) => handleInputChange(e, setIdentitas)} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                        <option>Fase A</option><option>Fase B</option><option>Fase C</option><option>Fase D</option><option>Fase E</option><option>Fase F</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-semibold text-slate-700">Kelas / Cakupan Ujian</label>
+                      <select name="kelas" value={identitas.kelas} onChange={(e) => handleInputChange(e, setIdentitas)} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                        <optgroup label="Kelas Reguler">
+                          {[1,2,3,4,5,6,7,8,9,10,11,12].map(k => <option key={k} value={`Kelas ${k}`}>Kelas {k}</option>)}
+                        </optgroup>
+                        <optgroup label="Ujian Akhir (PSAJ)">
+                          <option value="PSAJ SD (Materi Kelas 4 - 6)">PSAJ SD (Materi Kelas 4 - 6)</option>
+                          <option value="PSAJ SMP (Materi Kelas 7 - 9)">PSAJ SMP (Materi Kelas 7 - 9)</option>
+                          <option value="PSAJ SMA (Materi Kelas 10 - 12)">PSAJ SMA (Materi Kelas 10 - 12)</option>
+                        </optgroup>
+                        <optgroup label="Persiapan PTN">
+                          <option value="Persiapan SNBT / UTBK">Persiapan SNBT / UTBK</option>
+                        </optgroup>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-semibold text-slate-700">Jenis Kurikulum</label>
+                      <select name="kurikulum" value={identitas.kurikulum} onChange={(e) => handleInputChange(e, setIdentitas)} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                        <option>Kurikulum Merdeka</option><option>Kurikulum 2013 (K13)</option><option>Kurikulum Nasional</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-semibold text-slate-700">Mata Pelajaran</label>
+                      <select name="mapel" value={identitas.mapel} onChange={(e) => handleInputChange(e, setIdentitas)} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none overflow-y-auto">
+                        <optgroup label="Mata Pelajaran Sekolah">
+                          <option>Pendidikan Agama Islam (PAI)</option><option>Al-Qur'an</option><option>Bahasa Arab</option>
+                          <option>Pendidikan Pancasila (PKn)</option><option>Bahasa Indonesia</option><option>Bahasa Sunda</option>
+                          <option>Matematika</option><option>Ilmu Pengetahuan Alam (IPA)</option><option>Ilmu Pengetahuan Alam dan Sosial (IPAS)</option>
+                          <option>Ilmu Pengetahuan Sosial (IPS)</option><option>Fisika</option><option>Kimia</option><option>Biologi</option>
+                          <option>Bahasa Inggris</option><option>PJOK</option><option>Seni Budaya</option><option>Prakarya</option>
+                          <option>Informatika / TIK</option><option>Sejarah</option><option>Geografi</option><option>Ekonomi</option><option>Sosiologi</option>
+                        </optgroup>
+                        <optgroup label="Subtes SNBT / UTBK">
+                          <option>Kemampuan Penalaran Umum</option><option>Pengetahuan Kuantitatif</option>
+                          <option>Pemahaman Bacaan dan Menulis (PBM)</option><option>Pengetahuan dan Pemahaman Umum (PPU)</option>
+                          <option>Literasi dalam Bahasa Indonesia</option><option>Literasi dalam Bahasa Inggris</option>
+                          <option>Penalaran Matematika</option>
+                        </optgroup>
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-semibold text-slate-700">Semester</label>
+                      <select name="semester" value={identitas.semester} onChange={(e) => handleInputChange(e, setIdentitas)} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                        <option value="1 (Ganjil)">1 (Ganjil)</option>
+                        <option value="2 (Genap)">2 (Genap)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* FITUR BARU: Dropdown Materi Pokok Custom */}
+                  <div className="grid grid-cols-1 sm:grid-cols-5 gap-6">
+                    <div className="space-y-1.5 sm:col-span-2 relative">
+                      <label className="text-sm font-semibold text-slate-700 flex justify-between items-center">
+                        <span>Materi Pokok</span>
+                        {materiSuggestions.length > 0 ? (
+                           <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold">Rekomendasi Tersedia</span>
+                        ) : (
+                           <span className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold">Ketik Manual</span>
+                        )}
+                      </label>
+                      <div className="flex">
+                        <input 
+                          type="text" 
+                          name="materi" 
+                          value={identitas.materi} 
+                          onChange={(e) => handleInputChange(e, setIdentitas)} 
+                          onFocus={() => setShowMateriDropdown(true)}
+                          placeholder="Ketik materi manual atau pilih dari panah..." 
+                          className={`w-full p-3 bg-slate-50 border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500 outline-none ${materiSuggestions.length > 0 ? 'rounded-l-xl' : 'rounded-xl'}`}
+                        />
+                        {materiSuggestions.length > 0 && (
+                          <button 
+                            onClick={() => setShowMateriDropdown(!showMateriDropdown)}
+                            className="px-4 bg-slate-100 border border-slate-200 border-l-0 rounded-r-xl hover:bg-slate-200 text-slate-600 flex items-center justify-center"
+                          >
+                            <ChevronDown size={18} />
+                          </button>
+                        )}
+                      </div>
+                      
+                      {/* Custom Dropdown Suggestion */}
+                      {showMateriDropdown && materiSuggestions.length > 0 && (
+                        <div className="absolute z-20 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-xl max-h-60 overflow-y-auto">
+                          <div className="p-2 bg-slate-50 border-b border-slate-100 text-xs font-bold text-slate-500 text-center">PILIH MATERI ATAU ABAIKAN & KETIK SENDIRI</div>
+                          {materiSuggestions.map((opt, idx) => (
+                            <div 
+                              key={idx} 
+                              onClick={() => { setIdentitas(prev => ({...prev, materi: opt})); setShowMateriDropdown(false); }}
+                              className="p-3 text-sm text-slate-700 border-b border-slate-100 hover:bg-emerald-50 hover:text-emerald-700 cursor-pointer"
+                            >
+                              {opt}
+                            </div>
+                          ))}
+                          <div className="p-2 text-center text-xs text-blue-600 cursor-pointer hover:bg-slate-50" onClick={()=>setShowMateriDropdown(false)}>Tutup Daftar</div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-semibold text-slate-700">Jenis Topik</label>
+                      <select name="jenisTopik" value={identitas.jenisTopik} onChange={(e) => handleInputChange(e, setIdentitas)} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                        <option>Spesifik</option><option>Umum</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-semibold text-slate-700">Tahun Ajaran</label>
+                      <input type="text" name="tahunAjaran" value={identitas.tahunAjaran} onChange={(e) => handleInputChange(e, setIdentitas)} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none" />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-semibold text-slate-700">Alokasi Waktu</label>
+                      <input type="text" name="jumlahPertemuan" value={identitas.jumlahPertemuan} onChange={(e) => handleInputChange(e, setIdentitas)} placeholder="Misal: 2 Pertemuan (4 JP)" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none" />
+                    </div>
+                  </div>
+
+                  {/* Upload Topik */}
+                  <div className="space-y-2 border border-slate-200 p-4 rounded-xl bg-slate-50">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                       <label className="text-sm font-semibold text-slate-700">Topik / Sumber Acuan Khusus</label>
+                       <div className="flex gap-2 bg-white p-1 rounded-lg border border-slate-200">
+                         <button onClick={() => setTopikMode('ketik')} className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${topikMode === 'ketik' ? 'bg-emerald-100 text-emerald-700' : 'text-slate-500 hover:bg-slate-100'}`}>Teks</button>
+                         <button onClick={() => setTopikMode('gambar')} className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors flex items-center gap-1 ${topikMode === 'gambar' ? 'bg-emerald-100 text-emerald-700' : 'text-slate-500 hover:bg-slate-100'}`}><ImageIcon size={14}/> Gambar</button>
+                       </div>
+                    </div>
+
+                    {topikMode === 'ketik' && (
+                      <textarea 
+                        name="topik" value={identitas.topik} onChange={(e) => handleInputChange(e, setIdentitas)} 
+                        className="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none resize-none h-24 uppercase font-medium text-slate-700 shadow-inner" 
+                        placeholder="Ketik topik acuan spesifik disini..."
+                      />
+                    )}
+                    
+                    {topikMode === 'gambar' && (
+                      <div className="relative border-2 border-dashed border-emerald-300 rounded-xl p-8 flex flex-col items-center justify-center text-emerald-500 bg-emerald-50/50 hover:bg-emerald-50 transition cursor-pointer">
+                        <ImageIcon size={32} className="mb-3 opacity-70" />
+                        <span className="text-sm font-bold text-emerald-700">Upload Gambar Acuan AI</span>
+                        <span className="text-xs text-emerald-500 mt-1">Format: JPG, PNG. AI akan membaca isi gambar ini.</span>
+                        <input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => setTopikImage(e.target.files[0])} />
+                        {topikImage && <p className="mt-4 text-sm font-bold text-slate-700 bg-white px-3 py-1 rounded-full shadow-sm border border-slate-200">{topikImage.name}</p>}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* === TAB 2: KONFIGURASI === */}
+            {activeTab === 'konfigurasi' && (
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 max-w-3xl mx-auto">
+                <div className="text-center mb-8">
+                  <h2 className="text-3xl font-black text-slate-800 tracking-tight">1 Menit Aja</h2>
+                  <h3 className="text-2xl font-bold text-slate-700 mb-2">Bikin Dokumen Guru Pintar</h3>
+                  <p className="text-slate-500">(Terintegrasi Karakter & Pembelajaran Mendalam)</p>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-5 mb-6">
+                    <div className="flex justify-between items-center mb-4">
+                      <h4 className="text-sm font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-2">
+                        <FileText size={16}/> Komposisi Soal & Taksonomi Bloom
+                      </h4>
+                      <span className="text-xs font-bold bg-emerald-200 text-emerald-800 px-3 py-1.5 rounded-full">
+                        Total: {config.komposisiSoal.reduce((acc, curr) => acc + curr.jumlah, 0)} Soal
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      {config.komposisiSoal.map((item, index) => (
+                        <div key={item.id} className="flex flex-col lg:flex-row gap-3 items-start lg:items-center p-3 bg-white border border-emerald-200 rounded-xl">
+                          <div className="hidden lg:flex w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 items-center justify-center font-bold text-sm shrink-0">{index + 1}</div>
+                          
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 w-full">
+                            <select 
+                              value={item.tipe} 
+                              onChange={(e) => setConfig(prev => ({...prev, komposisiSoal: prev.komposisiSoal.map(k => k.id === item.id ? { ...k, tipe: e.target.value } : k)}))} 
+                              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none font-medium text-slate-700"
+                            >
+                              <option>Pilihan Ganda (Biasa)</option><option>Pilihan Ganda Kompleks</option>
+                              <option>Sebab - Akibat (Tipe TKA)</option><option>Pilihan Ganda 1-2-3-4 (Tipe TKA)</option>
+                              <option>Benar/Salah</option><option>Menjodohkan</option>
+                              <option>Isian</option><option>Uraian / Essay</option>
+                            </select>
+
+                            <div className="w-full p-2.5 bg-indigo-50 border border-indigo-200 rounded-xl flex flex-col gap-2 justify-center">
+                              <span className="text-[10px] font-bold text-indigo-800 uppercase tracking-wide">Pilih Taksonomi (Bisa &gt;1)</span>
+                              <div className="flex flex-wrap gap-1.5">
+                                {['C1', 'C2', 'C3', 'C4', 'C5', 'C6'].map(level => (
+                                  <label key={level} className="flex items-center gap-1 text-xs font-semibold text-indigo-700 bg-white px-2 py-1 rounded border border-indigo-200 cursor-pointer hover:bg-indigo-100 transition-colors">
+                                    <input 
+                                      type="checkbox" 
+                                      checked={Array.isArray(item.taksonomi) ? item.taksonomi.includes(level) : item.taksonomi.includes(level)}
+                                      onChange={(e) => {
+                                        const currentTaksonomi = Array.isArray(item.taksonomi) ? item.taksonomi : ['C1', 'C2', 'C3', 'C4', 'C5', 'C6'];
+                                        const newTaksonomi = e.target.checked 
+                                          ? [...currentTaksonomi, level].sort()
+                                          : currentTaksonomi.filter(t => t !== level);
+                                        setConfig(prev => ({
+                                          ...prev, 
+                                          komposisiSoal: prev.komposisiSoal.map(k => k.id === item.id ? { ...k, taksonomi: newTaksonomi.length > 0 ? newTaksonomi : [level] } : k)
+                                        }));
+                                      }}
+                                      className="rounded text-indigo-600 focus:ring-indigo-500 w-3 h-3 border-indigo-300 cursor-pointer"
+                                    />
+                                    {level}
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex w-full lg:w-auto items-center justify-between gap-2 mt-2 lg:mt-0">
+                            <div className="flex items-center h-[46px] bg-slate-50 border border-slate-200 rounded-xl overflow-hidden shrink-0 flex-1 lg:flex-none">
+                              <button onClick={() => setConfig(prev => ({...prev, komposisiSoal: prev.komposisiSoal.map(k => k.id === item.id ? { ...k, jumlah: Math.max(1, k.jumlah - 1) } : k)}))} className="w-10 h-full flex items-center justify-center text-slate-500 hover:bg-slate-200 transition"><Minus size={16}/></button>
+                              <div className="w-10 sm:w-12 text-center font-bold text-slate-800 text-sm">{item.jumlah}</div>
+                              <button onClick={() => setConfig(prev => ({...prev, komposisiSoal: prev.komposisiSoal.map(k => k.id === item.id ? { ...k, jumlah: Math.min(50, k.jumlah + 1) } : k)}))} className="w-10 h-full flex items-center justify-center text-slate-500 hover:bg-slate-200 transition"><Plus size={16}/></button>
+                            </div>
+                            
+                            {config.komposisiSoal.length > 1 && (
+                              <button onClick={() => setConfig(prev => ({...prev, komposisiSoal: prev.komposisiSoal.filter(k => k.id !== item.id)}))} className="w-[46px] h-[46px] flex items-center justify-center bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition border border-red-100 shrink-0">
+                                <Trash2 size={18}/>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      <button onClick={() => setConfig(prev => ({...prev, komposisiSoal: [...prev.komposisiSoal, { id: Date.now(), tipe: 'Uraian / Essay', taksonomi: ['C4', 'C5', 'C6'], jumlah: 1 }]}))} className="w-full py-3 mt-4 border-2 border-dashed border-emerald-300 text-emerald-600 rounded-xl text-sm font-bold hover:bg-emerald-50 transition flex items-center justify-center gap-2">
+                        <Plus size={18}/> Tambah Grup Soal
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="bg-green-50/50 border border-green-200 rounded-xl p-5">
+                    <h4 className="text-xs font-bold text-green-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+                      <User size={16}/> Konfigurasi Karakter & Nilai-Nilai
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-semibold text-slate-700">Karakter Umum (P3)</label>
+                        <select name="karakterUmum" value={config.karakterUmum} onChange={(e) => handleInputChange(e, setConfig)} className="w-full p-3 bg-white border border-green-200 rounded-xl text-sm focus:ring-2 outline-none">
+                          <option>Tidak Ada</option><option>Bergotong Royong & Mandiri</option><option>Bernalar Kritis & Kreatif</option>
+                          <option>Beriman & Bertakwa kepada Tuhan YME</option><option>Jujur, Disiplin & Tanggung Jawab</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-semibold text-slate-700">Karakter Islami (Opsional)</label>
+                        <select name="nilaiIslami" value={config.nilaiIslami} onChange={(e) => handleInputChange(e, setConfig)} className="w-full p-3 bg-white border border-green-200 rounded-xl text-sm focus:ring-2 outline-none">
+                          <option>Tidak Ada</option><option>Amanah & Shidq</option><option>Fathonah & Tabligh</option>
+                          <option>Tafakur & Syukur</option><option>Sabar & Istiqamah</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50/50 border border-blue-200 rounded-xl p-5">
+                    <h4 className="text-xs font-bold text-blue-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+                      <ImageIcon size={16}/> Elemen Tambahan Soal
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-semibold text-slate-700">Teks Stimulus / Wacana</label>
+                        <select name="opsiStimulus" value={config.opsiStimulus} onChange={(e) => handleInputChange(e, setConfig)} className="w-full p-3 bg-white border border-blue-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                          <option>Sesuai Kebutuhan (HOTS & Karakter)</option>
+                          <option>Wajib Ada (Semua Soal)</option>
+                          <option>Tidak Ada (To the point)</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-semibold text-slate-700">Ilustrasi Gambar AI</label>
+                        <select name="opsiGambar" value={config.opsiGambar} onChange={(e) => handleInputChange(e, setConfig)} className="w-full p-3 bg-white border border-blue-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                          <option>Gunakan Jika Relevan</option>
+                          <option>Tanpa Gambar</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            )}
+
+            {/* === TAB PROTA === */}
+            {activeTab === 'prota' && (
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-200 gap-4">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-800">Program Tahunan (Prota)</h2>
+                    <p className="text-sm text-slate-500">Mata Pelajaran: {identitas.mapel} | Kelas: {identitas.kelas} ({identitas.kurikulum})</p>
+                  </div>
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    {generatedProta && <button onClick={() => exportDocumentFromDOM('doc-prota', `Prota_${identitas.mapel}`)} className="px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-sm font-bold flex items-center gap-2"><FileDown size={16}/> Ekspor Word</button>}
+                    <button onClick={handleGenerateProta} disabled={loading} className="w-full sm:w-auto bg-emerald-600 text-white font-bold px-6 py-3 rounded-xl flex items-center justify-center gap-2 shadow-sm disabled:opacity-70">
+                      {loading ? <><Loader2 size={18} className="animate-spin"/> Menyusun Prota...</> : <><CalendarDays size={18}/> Generate Prota</>}
+                    </button>
+                  </div>
+                </div>
+
+                {generatedProta && !loading && (
+                   <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                     <div id="doc-prota" className="p-6 sm:p-8 overflow-x-auto">
+                        <div className="text-center mb-6">
+                          <h3 className="text-xl font-bold uppercase text-slate-800">PROGRAM TAHUNAN</h3>
+                          <p className="text-sm text-slate-600">Sekolah: {identitas.namaSekolah} | Mapel: {identitas.mapel} | Kelas: {identitas.kelas} | Tahun Ajaran: {identitas.tahunAjaran}</p>
+                        </div>
+                        
+                        <table className="w-full border-collapse border border-slate-300 text-sm text-left">
+                          <thead className="bg-emerald-50">
+                            <tr>
+                              <th className="border border-slate-300 p-3 font-semibold text-center w-12 text-emerald-900">No</th>
+                              <th className="border border-slate-300 p-3 font-semibold text-center text-emerald-900">Semester</th>
+                              <th className="border border-slate-300 p-3 font-semibold text-emerald-900">
+                                {identitas.kurikulum.includes('Merdeka') ? 'Elemen / Tujuan Pembelajaran (TP)' : 'Kompetensi Dasar (KD)'}
+                              </th>
+                              <th className="border border-slate-300 p-3 font-semibold text-emerald-900">Materi Pokok</th>
+                              <th className="border border-slate-300 p-3 font-semibold text-center text-emerald-900">Alokasi Waktu</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {generatedProta.map((row, idx) => (
+                              <tr key={idx} className="hover:bg-slate-50">
+                                <td className="border border-slate-300 p-3 text-center font-medium">{idx + 1}</td>
+                                <td className="border border-slate-300 p-3 text-center font-semibold text-slate-700">{row.semester}</td>
+                                <td className="border border-slate-300 p-3 text-slate-700">{row.kompetensi}</td>
+                                <td className="border border-slate-300 p-3 text-slate-700">{row.materi_pokok}</td>
+                                <td className="border border-slate-300 p-3 text-center font-semibold text-emerald-700">{row.alokasi_waktu}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                     </div>
+                   </div>
+                )}
+              </div>
+            )}
+
+            {/* === TAB PROSEM === */}
+            {activeTab === 'prosem' && (
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-200 gap-4">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-800">Program Semester (Prosem)</h2>
+                    <p className="text-sm text-slate-500">Semester: {identitas.semester} | Mapel: {identitas.mapel} ({identitas.kurikulum})</p>
+                  </div>
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    {generatedProsem && <button onClick={() => exportDocumentFromDOM('doc-prosem', `Prosem_${identitas.mapel}`)} className="px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-sm font-bold flex items-center gap-2"><FileDown size={16}/> Ekspor Word</button>}
+                    <button onClick={handleGenerateProsem} disabled={loading} className="w-full sm:w-auto bg-emerald-600 text-white font-bold px-6 py-3 rounded-xl flex items-center justify-center gap-2 shadow-sm disabled:opacity-70">
+                      {loading ? <><Loader2 size={18} className="animate-spin"/> Menyusun Prosem...</> : <><CalendarRange size={18}/> Generate Prosem</>}
+                    </button>
+                  </div>
+                </div>
+
+                {generatedProsem && !loading && (
+                   <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                     <div id="doc-prosem" className="p-6 sm:p-8 overflow-x-auto">
+                        <div className="text-center mb-6">
+                          <h3 className="text-xl font-bold uppercase text-slate-800">PROGRAM SEMESTER</h3>
+                          <p className="text-sm text-slate-600">Sekolah: {identitas.namaSekolah} | Mapel: {identitas.mapel} | Kelas: {identitas.kelas} | Semester: {identitas.semester} | Tahun Ajaran: {identitas.tahunAjaran}</p>
+                        </div>
+                        
+                        <table className="w-full border-collapse border border-slate-300 text-sm text-left">
+                          <thead className="bg-emerald-50">
+                            <tr>
+                              <th className="border border-slate-300 p-3 font-semibold text-center w-12 text-emerald-900">No</th>
+                              <th className="border border-slate-300 p-3 font-semibold text-center text-emerald-900">Bulan</th>
+                              <th className="border border-slate-300 p-3 font-semibold text-center text-emerald-900">Minggu Ke</th>
+                              <th className="border border-slate-300 p-3 font-semibold text-emerald-900">
+                                 {identitas.kurikulum.includes('Merdeka') ? 'Tujuan Pembelajaran (TP) / Materi Pokok' : 'Materi Pokok / Kegiatan'}
+                              </th>
+                              <th className="border border-slate-300 p-3 font-semibold text-center text-emerald-900">Alokasi Waktu</th>
+                              <th className="border border-slate-300 p-3 font-semibold text-emerald-900">Keterangan</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {generatedProsem.map((row, idx) => (
+                              <tr key={idx} className="hover:bg-slate-50">
+                                <td className="border border-slate-300 p-3 text-center font-medium">{idx + 1}</td>
+                                <td className="border border-slate-300 p-3 text-center font-bold text-slate-800">{row.bulan}</td>
+                                <td className="border border-slate-300 p-3 text-center text-slate-700">{row.minggu_ke}</td>
+                                <td className="border border-slate-300 p-3 text-slate-700">{row.materi_pokok}</td>
+                                <td className="border border-slate-300 p-3 text-center font-semibold text-emerald-700">{row.alokasi_waktu}</td>
+                                <td className="border border-slate-300 p-3 text-slate-700">{row.keterangan}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                     </div>
+                   </div>
+                )}
+              </div>
+            )}
+
+            {/* === TAB 2B: KISI-KISI SOAL === */}
+            {activeTab === 'kisi_kisi' && (
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-200 gap-4">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-800">Kisi-Kisi Penulisan Soal</h2>
+                    <p className="text-sm text-slate-500">Berdasarkan Konfigurasi Komposisi Soal ({identitas.kurikulum})</p>
+                  </div>
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    {generatedKisiKisi && <button onClick={() => exportDocumentFromDOM('doc-kisi-kisi', `Kisi-Kisi_${identitas.mapel}`)} className="px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-sm font-bold flex items-center gap-2"><FileDown size={16}/> Ekspor Word</button>}
+                    <button onClick={handleGenerateKisiKisi} disabled={loading} className="w-full sm:w-auto bg-emerald-600 text-white font-bold px-6 py-3 rounded-xl flex items-center justify-center gap-2 shadow-sm disabled:opacity-70">
+                      {loading ? <><Loader2 size={18} className="animate-spin"/> Menyusun Kisi...</> : <><Table size={18}/> Generate Kisi-Kisi</>}
+                    </button>
+                  </div>
+                </div>
+
+                {generatedKisiKisi && !loading && (
+                   <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                     <div id="doc-kisi-kisi" className="p-6 sm:p-8 overflow-x-auto">
+                        <div className="text-center mb-6">
+                          <h3 className="text-xl font-bold uppercase text-slate-800">KISI-KISI PENULISAN SOAL</h3>
+                          <p className="text-sm text-slate-600">{identitas.namaSekolah} | Mapel: {identitas.mapel} | Kelas: {identitas.kelas} | Sem: {identitas.semester}</p>
+                        </div>
+                        
+                        <table className="w-full border-collapse border border-slate-300 text-sm text-left">
+                          <thead className="bg-emerald-50">
+                            <tr>
+                              <th className="border border-slate-300 p-3 font-semibold text-center w-12 text-emerald-900">No</th>
+                              <th className="border border-slate-300 p-3 font-semibold text-emerald-900">
+                                {identitas.kurikulum.includes('Merdeka') ? 'Tujuan Pembelajaran (TP)' : 'Kompetensi Dasar (KD)'}
+                              </th>
+                              <th className="border border-slate-300 p-3 font-semibold text-emerald-900">Materi Pokok</th>
+                              <th className="border border-slate-300 p-3 font-semibold text-emerald-900">Indikator Soal</th>
+                              <th className="border border-slate-300 p-3 font-semibold text-center text-emerald-900">Level</th>
+                              <th className="border border-slate-300 p-3 font-semibold text-center text-emerald-900">Bentuk Soal</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {generatedKisiKisi.map((row, idx) => (
+                              <tr key={idx} className="hover:bg-slate-50">
+                                <td className="border border-slate-300 p-3 text-center font-medium">{row.no}</td>
+                                <td className="border border-slate-300 p-3 text-slate-700">{row.kompetensi}</td>
+                                <td className="border border-slate-300 p-3 text-slate-700">{row.materi}</td>
+                                <td className="border border-slate-300 p-3 text-slate-700">{row.indikator_soal}</td>
+                                <td className="border border-slate-300 p-3 text-center font-semibold text-emerald-700">{row.level_kognitif}</td>
+                                <td className="border border-slate-300 p-3 text-center text-slate-700">{row.bentuk_soal}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                     </div>
+                   </div>
+                )}
+              </div>
+            )}
+
+            {/* === TAB 3: NASKAH SOAL === */}
+            {activeTab === 'naskah_soal' && (
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-200 gap-4">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-800">Naskah Soal: {identitas.mapel}</h2>
+                    <p className="text-sm text-slate-500">Topik: {identitas.topik}</p>
+                  </div>
+                  <button onClick={handleGenerateSoal} disabled={loading} className="w-full sm:w-auto bg-emerald-600 text-white font-bold px-6 py-3 rounded-xl flex items-center justify-center gap-2 shadow-sm disabled:opacity-70">
+                    {loading ? <><Loader2 size={18} className="animate-spin"/> Menyusun Soal...</> : <><BrainCircuit size={18}/> Buat Paket Soal Baru</>}
+                  </button>
+                </div>
+
+                {generatedSoal.length > 0 && !loading && (
+                  <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div className="bg-slate-50 border-b border-slate-200 p-4 flex justify-between items-center">
+                      <div className="flex items-center gap-2 font-bold text-slate-700"><CheckCircle2 size={20} className="text-green-600"/> {generatedSoal.length} Soal Berhasil Dibuat</div>
+                      <div className="flex gap-2">
+                        <button onClick={() => setShowAnswers(!showAnswers)} className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-semibold">{showAnswers ? 'Sembunyikan' : 'Tampilkan'} Kunci</button>
+                        <button onClick={exportNaskahSoalToWord} className="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg text-sm font-bold flex items-center gap-2"><FileDown size={16}/> Ekspor Word</button>
+                      </div>
+                    </div>
+                    
+                    <div className="p-6 sm:p-8 space-y-8">
+                      {generatedSoal.map((q, i) => (
+                        <div key={i} className="relative">
+                          <div className="flex gap-4">
+                            <div className="w-8 h-8 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center font-bold shrink-0">{i+1}</div>
+                            <div className="flex-1">
+                              <span className="inline-block px-2 py-1 bg-slate-100 text-slate-600 text-[10px] font-bold rounded mb-3 uppercase tracking-wide border border-slate-200">{q.tipe_soal}</span>
+                              
+                              {q.teks_stimulus && q.teks_stimulus.trim() !== '' && (
+                                <div dir="auto" className="mb-4 p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 italic leading-relaxed text-justify shadow-inner">
+                                  {q.teks_stimulus}
+                                </div>
+                              )}
+                              {q.butuh_gambar && q.keyword_pencarian_gambar && (
+                                <div className="mb-4 bg-slate-50 p-2 rounded-xl border border-slate-100 inline-block">
+                                  <img src={`https://image.pollinations.ai/prompt/${encodeURIComponent(q.keyword_pencarian_gambar)}?width=400&height=250&nologo=true`} alt="Ilustrasi" className="rounded-lg max-w-full h-auto object-cover max-h-[250px] shadow-sm" loading="lazy" />
+                                </div>
+                              )}
+                              <p dir="auto" className="text-slate-800 font-medium text-[15px] leading-relaxed mb-4 text-justify">{q.pertanyaan}</p>
+
+                              {q.pilihan?.length > 0 && (
+                                <div className="space-y-2 mb-4">
+                                  {q.pilihan.map((opt, idx) => (
+                                    <div key={idx} dir="auto" className="p-3 rounded-xl border border-slate-200 bg-white text-sm flex gap-3">
+                                      <span className="font-bold">{String.fromCharCode(65+idx)}.</span> <span dir="auto">{opt}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              
+                              {showAnswers && (
+                                <div dir="auto" className="bg-slate-50 border border-slate-200 p-4 rounded-xl mt-4 space-y-3">
+                                  <div><span className="text-xs font-bold uppercase text-slate-500">Kunci Jawaban</span><p className="font-semibold text-slate-800" dir="auto">{q.jawaban}</p></div>
+                                  <div><span className="text-xs font-bold uppercase text-slate-500">Pembahasan</span><p className="text-sm text-slate-700" dir="auto">{q.penjelasan}</p></div>
+                                  {q.pesan_karakter && q.pesan_karakter !== '-' && (
+                                    <div className="bg-emerald-50 p-3 rounded-lg border border-emerald-100">
+                                      <span className="text-xs font-bold uppercase text-emerald-700 block mb-1">Insersi Nilai Karakter</span>
+                                      <p className="text-sm text-emerald-900 italic" dir="auto">"{q.pesan_karakter}"</p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          {i !== generatedSoal.length - 1 && <hr className="mt-8 border-slate-100" />}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* === TAB 4: RPP MENDALAM === */}
+            {activeTab === 'rpp' && (
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-200 gap-4">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-800">RPP Pendekatan Mendalam (Deep Learning)</h2>
+                    <p className="text-sm text-slate-500">Topik: {identitas.topik}</p>
+                  </div>
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    {generatedRPP && <button onClick={() => exportDocumentFromDOM('doc-rpp', `RPP_${identitas.mapel}`)} className="px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-sm font-bold flex items-center gap-2"><FileDown size={16}/> Ekspor Word</button>}
+                    <button onClick={handleGenerateRPP} disabled={loading} className="w-full sm:w-auto bg-emerald-600 text-white font-bold px-6 py-3 rounded-xl flex items-center justify-center gap-2 shadow-sm disabled:opacity-70">
+                      {loading ? <><Loader2 size={18} className="animate-spin"/> Menyusun RPP...</> : <><Layers size={18}/> Generate RPP Mendalam</>}
+                    </button>
+                  </div>
+                </div>
+
+                {generatedRPP && !loading && (
+                  <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+                    <div id="doc-rpp">
+                      <div className="text-center mb-8 border-b border-slate-100 pb-6">
+                        <h1 className="text-2xl font-black text-slate-800 mb-2 uppercase">{generatedRPP.judul_rpp}</h1>
+                        <p className="text-emerald-600 font-bold bg-emerald-50 inline-block px-4 py-1 rounded-full text-sm mb-3">RPP Deep Learning - Pola TERPADU</p>
+                        <p className="text-slate-600 text-sm">Satuan Pendidikan: {identitas.namaSekolah} | Kelas: {identitas.kelas} | Semester: {identitas.semester} | Mapel: {identitas.mapel}</p>
+                        <p className="text-slate-600 text-sm font-semibold mt-1">Alokasi Waktu: {identitas.jumlahPertemuan}</p>
+                      </div>
+                      <div className="space-y-8">
+                        <section>
+                          <h3 className="text-lg font-bold text-slate-800 border-l-4 border-emerald-600 pl-3 mb-4">A. Tujuan Pembelajaran</h3>
+                          <ul className="list-disc pl-6 space-y-2 text-slate-700" dir="auto">{generatedRPP.tujuan_pembelajaran.map((t, i) => <li key={i}>{t}</li>)}</ul>
+                        </section>
+                        <section className="bg-amber-50 border border-amber-200 p-5 rounded-xl">
+                          <h3 className="text-lg font-bold text-amber-800 mb-2">B. Pemahaman Bermakna (Deep Learning)</h3>
+                          <p className="text-slate-700 leading-relaxed text-sm" dir="auto">{generatedRPP.pemahaman_bermakna}</p>
+                        </section>
+                        <section className="bg-teal-50 border border-teal-200 p-5 rounded-xl">
+                          <h3 className="text-lg font-bold text-teal-800 mb-2">C. Pertanyaan Pemantik</h3>
+                          <ul className="list-disc pl-6 space-y-2 text-teal-900 font-medium text-sm" dir="auto">{generatedRPP.pertanyaan_pemantik.map((t, i) => <li key={i}>{t}</li>)}</ul>
+                        </section>
+                        <section>
+                          <h3 className="text-lg font-bold text-slate-800 border-l-4 border-emerald-600 pl-3 mb-4">D. Kegiatan Pembelajaran TERPADU</h3>
+                          <div className="space-y-4">
+                            <div className="border border-slate-200 rounded-xl p-4">
+                              <h4 className="font-bold text-slate-800 mb-2 bg-slate-100 inline-block px-3 py-1 rounded-lg">1. Pendahuluan (Apersepsi & Telaah)</h4>
+                              <ul className="list-disc pl-6 space-y-1 text-sm text-slate-700" dir="auto">{generatedRPP.kegiatan_pembelajaran.pendahuluan.map((k, i)=><li key={i}>{k}</li>)}</ul>
+                            </div>
+                            <div className="border border-emerald-200 bg-emerald-50/30 rounded-xl p-4">
+                              <h4 className="font-bold text-emerald-800 mb-2 bg-emerald-100 inline-block px-3 py-1 rounded-lg">2. Kegiatan Inti (Eksplorasi, Rumuskan, Presentasikan, Aplikasikan)</h4>
+                              <ul className="list-disc pl-6 space-y-2 text-sm text-slate-800 font-medium" dir="auto">{generatedRPP.kegiatan_pembelajaran.inti_eksplorasi_mendalam.map((k, i)=><li key={i}>{k}</li>)}</ul>
+                            </div>
+                            <div className="border border-slate-200 rounded-xl p-4">
+                              <h4 className="font-bold text-slate-800 mb-2 bg-slate-100 inline-block px-3 py-1 rounded-lg">3. Penutup (Duniawi, Ukhrowi & Refleksi)</h4>
+                              <ul className="list-disc pl-6 space-y-1 text-sm text-slate-700" dir="auto">{generatedRPP.kegiatan_pembelajaran.penutup_dan_refleksi.map((k, i)=><li key={i}>{k}</li>)}</ul>
+                            </div>
+                          </div>
+                        </section>
+                        <section>
+                          <h3 className="text-lg font-bold text-slate-800 border-l-4 border-emerald-600 pl-3 mb-4">E. Asesmen Penilaian</h3>
+                          <p className="text-slate-700 p-4 border border-slate-200 bg-slate-50 rounded-xl text-sm" dir="auto">{generatedRPP.asesmen}</p>
+                        </section>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* === TAB 5: MODUL AJAR === */}
+            {activeTab === 'modul_ajar' && (
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-200 gap-4">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-800">Modul Ajar Terpadu (JSIT)</h2>
+                    <p className="text-sm text-slate-500">Topik: {identitas.topik}</p>
+                  </div>
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    {generatedModul && <button onClick={() => exportDocumentFromDOM('doc-modul', `Modul_${identitas.mapel}`)} className="px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-sm font-bold flex items-center gap-2"><FileDown size={16}/> Ekspor Word</button>}
+                    <button onClick={handleGenerateModul} disabled={loading} className="w-full sm:w-auto bg-emerald-600 text-white font-bold px-6 py-3 rounded-xl flex items-center justify-center gap-2 shadow-sm disabled:opacity-70">
+                      {loading ? <><Loader2 size={18} className="animate-spin"/> Menyusun Modul...</> : <><BookOpen size={18}/> Generate Modul Ajar</>}
+                    </button>
+                  </div>
+                </div>
+
+                {generatedModul && !loading && (
+                  <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+                    <div id="doc-modul">
+                      <div className="text-center mb-8 border-b border-slate-100 pb-6">
+                        <h1 className="text-2xl font-black text-slate-800 mb-2">{generatedModul.judul}</h1>
+                        <p className="text-emerald-600 font-bold bg-emerald-50 inline-block px-4 py-1 rounded-full text-sm mb-3">Modul Ajar Pendekatan TERPADU (JSIT)</p>
+                        <p className="text-slate-600 text-sm max-w-3xl mx-auto italic" dir="auto">
+                          *TERPADU (Telaah, Eksplorasi, Rumuskan, Presentasikan, Aplikasikan, Duniawi, Ukhrowi) merupakan metode pembelajaran aktif untuk memadukan nilai Islam dengan materi kurikulum nasional.
+                        </p>
+                        <p className="text-slate-600 text-sm mt-3 font-semibold">Alokasi Waktu: {identitas.jumlahPertemuan}</p>
+                      </div>
+                      <div className="space-y-8">
+                        <section>
+                          <h3 className="text-lg font-bold text-slate-800 border-l-4 border-emerald-600 pl-3 mb-4">A. Tujuan Pembelajaran</h3>
+                          <ul className="list-disc pl-6 space-y-2 text-slate-700" dir="auto">{generatedModul.tujuan.map((t, i) => <li key={i}>{t}</li>)}</ul>
+                        </section>
+                        <section>
+                          <h3 className="text-lg font-bold text-slate-800 border-l-4 border-teal-600 pl-3 mb-4">B. Skenario Kegiatan (TERPADU)</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {Object.entries(generatedModul.kegiatan_terpadu).map(([key, val]) => (
+                              <div key={key} className={`p-5 rounded-xl border ${key === 'ukhrawi' || key === 'duniawi' ? 'bg-teal-50 border-teal-200 col-span-1 md:col-span-2' : 'bg-slate-50 border-slate-200'}`}>
+                                <h4 className="font-bold text-slate-800 capitalize mb-2">{key}</h4>
+                                <p className="text-sm text-slate-600 leading-relaxed" dir="auto">{val}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* === TAB 6: LKPD === */}
+            {activeTab === 'lkpd' && (
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-200 gap-4">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-800">Lembar Kerja Peserta Didik (LKPD)</h2>
+                    <p className="text-sm text-slate-500">Praktik / Diskusi Berbasis Proyek</p>
+                  </div>
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    {generatedLKPD && <button onClick={() => exportDocumentFromDOM('doc-lkpd', `LKPD_${identitas.mapel}`)} className="px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-sm font-bold flex items-center gap-2"><FileDown size={16}/> Ekspor Word</button>}
+                    <button onClick={handleGenerateLKPD} disabled={loading} className="w-full sm:w-auto bg-emerald-600 text-white font-bold px-6 py-3 rounded-xl flex items-center justify-center gap-2 shadow-sm disabled:opacity-70">
+                      {loading ? <><Loader2 size={18} className="animate-spin"/> Menyusun LKPD...</> : <><ClipboardList size={18}/> Generate LKPD</>}
+                    </button>
+                  </div>
+                </div>
+
+                {!generatedLKPD && !loading && (
+                  <div className="bg-white rounded-2xl border-2 border-dashed border-slate-200 p-16 flex flex-col items-center justify-center text-center">
+                    <ClipboardList size={48} className="text-slate-300 mb-4" />
+                    <h3 className="text-xl font-bold text-slate-700 mb-2">Belum Ada LKPD</h3>
+                    <p className="text-slate-500 text-sm max-w-sm">Klik tombol "Generate LKPD" di atas untuk menyusun aktivitas proyek atau eksperimen siswa berdasarkan materi Anda.</p>
+                  </div>
+                )}
+
+                {generatedLKPD && !loading && (
+                  <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+                    <div id="doc-lkpd">
+                      <div className="text-center mb-8 border-b border-slate-100 pb-6">
+                        <h1 className="text-2xl font-black text-slate-800 mb-2 uppercase">{generatedLKPD.judul_lkpd}</h1>
+                        <p className="text-slate-600 text-sm">Nama Kelompok: _________________________ &nbsp;&nbsp;&nbsp; Kelas: {identitas.kelas} &nbsp;&nbsp;&nbsp; Semester: {identitas.semester}</p>
+                        <p className="text-slate-600 text-sm font-semibold mt-1">Alokasi Waktu: {identitas.jumlahPertemuan}</p>
+                      </div>
+                      
+                      <div className="space-y-6">
+                        <section className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl">
+                          <h3 className="font-bold text-emerald-800 mb-2">A. Tujuan Pembelajaran</h3>
+                          <ul className="list-disc pl-5 text-sm text-emerald-900 space-y-1" dir="auto">
+                            {generatedLKPD.tujuan_pembelajaran.map((t, i) => <li key={i}>{t}</li>)}
+                          </ul>
+                        </section>
+
+                        {generatedLKPD.alat_dan_bahan?.length > 0 && (
+                          <section>
+                            <h3 className="font-bold text-slate-800 border-l-4 border-emerald-500 pl-3 mb-3">B. Alat dan Bahan</h3>
+                            <ul className="list-decimal pl-5 text-sm text-slate-700 space-y-1" dir="auto">
+                              {generatedLKPD.alat_dan_bahan.map((t, i) => <li key={i}>{t}</li>)}
+                            </ul>
+                          </section>
+                        )}
+
+                        <section>
+                          <h3 className="font-bold text-slate-800 border-l-4 border-emerald-500 pl-3 mb-3">C. Langkah Kerja</h3>
+                          <ol className="list-decimal pl-5 text-sm text-slate-700 space-y-2" dir="auto">
+                            {generatedLKPD.langkah_kerja.map((t, i) => <li key={i} className="pl-1">{t}</li>)}
+                          </ol>
+                        </section>
+
+                        <section className="mt-8 border-t border-slate-200 pt-6">
+                          <h3 className="font-bold text-slate-800 mb-4">D. Mari Berdiskusi!</h3>
+                          <div className="space-y-4">
+                            {generatedLKPD.pertanyaan_diskusi.map((q, i) => (
+                              <div key={i} className="space-y-2">
+                                <p className="text-sm font-medium text-slate-800" dir="auto">{i+1}. {q}</p>
+                                <div className="h-20 bg-slate-50 border border-slate-200 rounded-lg w-full border-dashed"></div>
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+
+                        <section className="mt-8 border-t border-slate-200 pt-6">
+                          <h3 className="font-bold text-slate-800 mb-4">E. Kesimpulan</h3>
+                          <p className="text-sm text-slate-600 mb-2" dir="auto">{generatedLKPD.kesimpulan}</p>
+                          <div className="h-24 bg-slate-50 border border-slate-200 rounded-lg w-full border-dashed"></div>
+                        </section>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+          </main>
+        </div>
+      );
+    }
+
+    const rootElement = document.getElementById('root');
+    const root = createRoot(rootElement);
+    root.render(<App />);
+  </script>
+</body>
+</html>
